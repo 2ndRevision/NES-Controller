@@ -43,10 +43,25 @@ void loop() {
   // Reset our register
   controller1 = 0;
   index = RESET_INDEX;
+  
+  // read first bit of shift register after latch, but 
+  // before clocking.
+  
+  // Read in the new bit
+  temp = digitalRead(DATA_PIN);
+  // OR the new bit with the other received bits into the LSB
+  controller1 = controller1 | (temp & B00000001);
+  // Shift last round of received bit to the left
+  //controller1 = (controller1 << 1);
 
   // Loop through bit shift from NES Controller
-  while(index != B00000000){
-    
+  while(index < B10000000){
+
+    // Clock the shift register to prepare for new bit
+    digitalWrite(CLOCK_PIN, HIGH);
+    delayMicroseconds(2);
+    digitalWrite(CLOCK_PIN, LOW);
+
     // Shift last round of received bit to the left
     controller1 = (controller1 << 1);
     
@@ -56,14 +71,11 @@ void loop() {
     // OR the new bit with the other received bits into the LSB
     controller1 = controller1 | (temp & B00000001);
 
-    // Clock the shift register to prepare for new bit
-    digitalWrite(CLOCK_PIN, HIGH);
-    delayMicroseconds(2);
-    digitalWrite(CLOCK_PIN, LOW);
 
     // Increment the index
     index = (index << 1);
   }
+
 
   if ((~controller1) & B10000000){
     Serial.println("A Button pressed");
